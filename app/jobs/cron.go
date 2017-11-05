@@ -2,7 +2,7 @@ package jobs
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/lisijie/cron"
+	"github.com/programwithebay/cron"
 	"sync"
 )
 

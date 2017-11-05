@@ -2,10 +2,10 @@ package main
 
 import (
 	"github.com/astaxie/beego"
-	"github.com/lisijie/webcron/app/controllers"
-	"github.com/lisijie/webcron/app/jobs"
-	_ "github.com/lisijie/webcron/app/mail"
-	"github.com/lisijie/webcron/app/models"
+	"github.com/programwithebay/webcron/app/controllers"
+	"github.com/programwithebay/webcron/app/jobs"
+	_ "github.com/programwithebay/webcron/app/mail"
+	"github.com/programwithebay/webcron/app/models"
 	"html/template"
 	"net/http"
 )
