@@ -140,12 +140,9 @@ func (this *MainController) Login() {
 				user.LastLogin = time.Now().Unix()
 				models.UserUpdate(user)
 
-				//authkey := libs.Md5([]byte(this.getClientIp() + "|" + user.Password + user.Salt))
 				if remember == "yes" {
-					//this.Ctx.SetCookie("auth", strconv.Itoa(user.Id)+"|"+authkey, 7*86400)
 					this.session.Set("uid", user.Id)
 				} else {
-					//this.Ctx.SetCookie("auth", strconv.Itoa(user.Id)+"|"+authkey)
 					this.session.Set("uid", user.Id)
 				}
 
@@ -162,7 +159,6 @@ func (this *MainController) Login() {
 
 // 退出登录
 func (this *MainController) Logout() {
-	this.Ctx.SetCookie("auth", "")
 	//清除session
 	this.session.Delete("uid")
 	this.redirect(beego.URLFor("MainController.Login"))

@@ -1,11 +1,8 @@
 package controllers
 
 import (
-	"strconv"
 	"strings"
-
 	"github.com/astaxie/beego"
-	"github.com/programwithebay/webcron/app/libs"
 	"github.com/programwithebay/webcron/app/models"
 	"github.com/astaxie/beego/session"
 	_ "github.com/astaxie/beego/session/redis"
@@ -48,35 +45,14 @@ func (this *BaseController) Prepare() {
 	this.Data["loginUserName"] = this.userName
 }
 
-//登录状态验证
-func (this *BaseController) auth() {
-	arr := strings.Split(this.Ctx.GetCookie("auth"), "|")
-	if len(arr) == 2 {
-		idstr, password := arr[0], arr[1]
-		userId, _ := strconv.Atoi(idstr)
-		if userId > 0 {
-			user, err := models.UserGetById(userId)
-			if err == nil && password == libs.Md5([]byte(this.getClientIp()+"|"+user.Password+user.Salt)) {
-				this.userId = user.Id
-				this.userName = user.UserName
-				this.isAdmin = user.IsAdmin
-				this.user = user
-			}
-		}
-	}
-
-	if this.userId == 0 && (this.controllerName != "main" ||
-		(this.controllerName == "main" && this.actionName != "logout" && this.actionName != "login")) {
-		this.redirect(beego.URLFor("MainController.Login"))
-	}
-}
-
 /**
 通过session认证权限
  */
 func (this *BaseController) authBySession() {
 	var errConvert bool
 	session := this.session.Get("uid")
+
+	//可能是byte数组
 	this.userId, errConvert = session.(int)
 	if !errConvert{
 		return

@@ -30,8 +30,11 @@ func Init() {
 	}
 
 	beego.BConfig.WebConfig.Session.SessionOn = true
-	beego.BConfig.WebConfig.Session.SessionProvider = "redis"
-	beego.BConfig.WebConfig.Session.SessionProviderConfig = "192.168.1.123:7000,100"
+	//driver
+	sessionProvider := beego.AppConfig.String("sessionProvider")
+	if ("" != sessionProvider){
+		beego.BConfig.WebConfig.Session.SessionProvider = sessionProvider
+	}
 }
 
 func TableName(name string) string {
