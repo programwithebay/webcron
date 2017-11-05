@@ -3,14 +3,15 @@ package jobs
 import (
 	"bytes"
 	"fmt"
-	"github.com/astaxie/beego"
-	"github.com/programwithebay/webcron/app/mail"
-	"github.com/programwithebay/webcron/app/models"
 	"html/template"
 	"os/exec"
 	"runtime/debug"
 	"strings"
 	"time"
+
+	"github.com/astaxie/beego"
+	"github.com/programwithebay/webcron/app/mail"
+	"github.com/programwithebay/webcron/app/models"
 )
 
 var mailTpl *template.Template
@@ -40,13 +41,14 @@ func init() {
 }
 
 type Job struct {
-	id         int                                               // 任务ID
-	logId      int64                                             // 日志记录ID
-	name       string                                            // 任务名称
-	task       *models.Task                                      // 任务对象
-	runFunc    func(time.Duration) (string, string, error, bool) // 执行函数
-	status     int                                               // 任务状态，大于0表示正在执行中
-	Concurrent bool                                              // 同一个任务是否允许并行执行
+	id            int                                               // 任务ID
+	logId         int64                                             // 日志记录ID
+	name          string                                            // 任务名称
+	task          *models.Task                                      // 任务对象
+	runFunc       func(time.Duration) (string, string, error, bool) // 执行函数
+	status        int                                               // 任务状态，大于0表示正在执行中
+	Concurrent    bool                                              // 同一个任务是否允许并行执行
+	ConcurrentNum int                                               //并发数
 }
 
 func NewJobFromTask(task *models.Task) (*Job, error) {
@@ -56,6 +58,8 @@ func NewJobFromTask(task *models.Task) (*Job, error) {
 	job := NewCommandJob(task.Id, task.TaskName, task.Command)
 	job.task = task
 	job.Concurrent = task.Concurrent == 1
+	//并发数写死
+	job.ConcurrentNum = 3
 	return job, nil
 }
 
@@ -67,7 +71,8 @@ func NewCommandJob(id int, name string, command string) *Job {
 	job.runFunc = func(timeout time.Duration) (string, string, error, bool) {
 		bufOut := new(bytes.Buffer)
 		bufErr := new(bytes.Buffer)
-		cmd := exec.Command("/bin/bash", "-c", command)
+		//cmd := exec.Command("/bin/bash", "-c", command)
+		cmd := exec.Command(command)
 		cmd.Stdout = bufOut
 		cmd.Stderr = bufErr
 		cmd.Start()
@@ -113,7 +118,7 @@ func (j *Job) Run() {
 		}()
 	}
 
-	beego.Debug(fmt.Sprintf("开始执行任务: %d", j.id))
+	beego.Debug(fmt.Sprintf("开始执行任务: %d, %s", j.id, j.task.Command))
 
 	j.status++
 	defer func() {
@@ -126,6 +131,7 @@ func (j *Job) Run() {
 		timeout = time.Second * time.Duration(j.task.Timeout)
 	}
 
+	//遍历执行3次
 	cmdOut, cmdErr, err, isTimeout := j.runFunc(timeout)
 
 	ut := time.Now().Sub(t) / time.Millisecond

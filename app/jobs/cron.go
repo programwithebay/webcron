@@ -1,9 +1,10 @@
 package jobs
 
 import (
-	"github.com/astaxie/beego"
-	"github.com/programwithebay/cron"
 	"sync"
+
+	"github.com/astaxie/beego"
+	"github.com/lisijie/cron"
 )
 
 var (

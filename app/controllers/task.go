@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"github.com/astaxie/beego"
-	libcron "github.com/programwithebay/cron"
-	"github.com/lisijie/programwithebay/app/jobs"
-	"github.com/lisijie/programwithebay/app/libs"
-	"github.com/lisijie/programwithebay/app/models"
+	libcron "github.com/lisijie/cron"	//@todo:此处依赖还没去掉
+	"github.com/programwithebay/webcron/app/jobs"
+	"github.com/programwithebay/webcron/app/libs"
+	"github.com/programwithebay/webcron/app/models"
 	"strconv"
 	"strings"
 	"time"

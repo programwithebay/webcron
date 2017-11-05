@@ -1,11 +1,14 @@
 package controllers
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/astaxie/beego"
 	"github.com/programwithebay/webcron/app/libs"
 	"github.com/programwithebay/webcron/app/models"
-	"strconv"
-	"strings"
+	"github.com/astaxie/beego/session"
+	_ "github.com/astaxie/beego/session/redis"
 )
 
 const (
@@ -19,16 +22,22 @@ type BaseController struct {
 	actionName     string
 	user           *models.User
 	userId         int
+	isAdmin			int
 	userName       string
 	pageSize       int
+	session			session.Store
 }
+
 
 func (this *BaseController) Prepare() {
 	this.pageSize = 20
 	controllerName, actionName := this.GetControllerAndAction()
 	this.controllerName = strings.ToLower(controllerName[0 : len(controllerName)-10])
 	this.actionName = strings.ToLower(actionName)
-	this.auth()
+	this.session = this.StartSession()
+
+	this.authBySession()
+	this.checkRight()	//检查权限
 
 	this.Data["version"] = beego.AppConfig.String("version")
 	this.Data["siteName"] = beego.AppConfig.String("site.name")
@@ -50,6 +59,7 @@ func (this *BaseController) auth() {
 			if err == nil && password == libs.Md5([]byte(this.getClientIp()+"|"+user.Password+user.Salt)) {
 				this.userId = user.Id
 				this.userName = user.UserName
+				this.isAdmin = user.IsAdmin
 				this.user = user
 			}
 		}
@@ -58,6 +68,56 @@ func (this *BaseController) auth() {
 	if this.userId == 0 && (this.controllerName != "main" ||
 		(this.controllerName == "main" && this.actionName != "logout" && this.actionName != "login")) {
 		this.redirect(beego.URLFor("MainController.Login"))
+	}
+}
+
+/**
+通过session认证权限
+ */
+func (this *BaseController) authBySession() {
+	var errConvert bool
+	session := this.session.Get("uid")
+	this.userId, errConvert = session.(int)
+	if !errConvert{
+		return
+	}
+	//str, _ = str.(string)
+	//this.userId, _ = strconv.Atoi(str)
+
+	if (this.userId > 0){
+		user, err := models.UserGetById(this.userId)
+		if (err == nil) {
+			this.userId = user.Id
+			this.userName = user.UserName
+			this.isAdmin = user.IsAdmin
+			this.user = user
+		}
+	}
+
+	if this.userId == 0 && (this.controllerName != "main" ||
+		(this.controllerName == "main" && this.actionName != "logout" && this.actionName != "login")) {
+		this.redirect(beego.URLFor("MainController.Login"))
+	}
+}
+/**
+检查权限
+ */
+func (this *BaseController) checkRight() {
+	actionName := this.actionName
+	controllerName := this.controllerName
+
+	if (("task" == controllerName)){
+		if (("task" == controllerName) &&	(("list" == actionName) || ("logs" == actionName) || ("viewlog"  == actionName))	){
+		}else{
+			if (this.isAdmin <= 0) {
+				this.ajaxMsg("无权限", MSG_ERR)
+			}
+		}
+	}
+	if ( this.isPost() && (this.actionName != "login")	) {
+		if (this.isAdmin <= 0) {
+			this.ajaxMsg("无权限", MSG_ERR)
+		}
 	}
 }
 
@@ -83,6 +143,7 @@ func (this *BaseController) redirect(url string) {
 func (this *BaseController) isPost() bool {
 	return this.Ctx.Request.Method == "POST"
 }
+
 
 // 显示错误信息
 func (this *BaseController) showMsg(args ...string) {

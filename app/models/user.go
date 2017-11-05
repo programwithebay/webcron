@@ -13,6 +13,7 @@ type User struct {
 	LastLogin int64
 	LastIp    string
 	Status    int
+	IsAdmin    int
 }
 
 func (u *User) TableName() string {

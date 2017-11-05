@@ -7,9 +7,10 @@ import (
 	"github.com/programwithebay/webcron/app/libs"
 	"github.com/programwithebay/webcron/app/models"
 	"runtime"
-	"strconv"
+	//"strconv"
 	"strings"
 	"time"
+	//"os/user"
 )
 
 type MainController struct {
@@ -139,11 +140,13 @@ func (this *MainController) Login() {
 				user.LastLogin = time.Now().Unix()
 				models.UserUpdate(user)
 
-				authkey := libs.Md5([]byte(this.getClientIp() + "|" + user.Password + user.Salt))
+				//authkey := libs.Md5([]byte(this.getClientIp() + "|" + user.Password + user.Salt))
 				if remember == "yes" {
-					this.Ctx.SetCookie("auth", strconv.Itoa(user.Id)+"|"+authkey, 7*86400)
+					//this.Ctx.SetCookie("auth", strconv.Itoa(user.Id)+"|"+authkey, 7*86400)
+					this.session.Set("uid", user.Id)
 				} else {
-					this.Ctx.SetCookie("auth", strconv.Itoa(user.Id)+"|"+authkey)
+					//this.Ctx.SetCookie("auth", strconv.Itoa(user.Id)+"|"+authkey)
+					this.session.Set("uid", user.Id)
 				}
 
 				this.redirect(beego.URLFor("TaskController.List"))
@@ -160,6 +163,8 @@ func (this *MainController) Login() {
 // 退出登录
 func (this *MainController) Logout() {
 	this.Ctx.SetCookie("auth", "")
+	//清除session
+	this.session.Delete("uid")
 	this.redirect(beego.URLFor("MainController.Login"))
 }
 
